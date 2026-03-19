@@ -70,19 +70,19 @@ public class OrderController {
         }
     }
     
-//    @GetMapping("/{orderId}/status")
-//    public ResponseEntity<Map<String, Object>> getOrderStatus(@PathVariable String orderId) {
-//        log.info("GET /api/orders/{}/status", orderId);
-//        return orderService.getOrderById(orderId)
-//            .map(order -> ResponseEntity.ok(Map.of(
-//                "orderId", order.getId(),
-//                "status", order.getStatus(),
-//                "sagaId", order.getSagaId() != null ? order.getSagaId() : "",
-//                "createdAt", order.getCreatedAt(),
-//                "updatedAt", order.getUpdatedAt()
-//            )))
-//            .orElse(ResponseEntity.notFound().build());
-//    }
+    @GetMapping("/{orderId}/status")
+    public ResponseEntity<Map<String, Object>> getOrderStatus(@PathVariable String orderId) {
+        log.info("GET /api/orders/{}/status", orderId);
+        return orderService.getOrderById(orderId)
+            .map(order -> ResponseEntity.ok(Map.of(
+                "orderId", order.getId(),
+                "status", order.getStatus(),
+                "sagaId", order.getSagaId() != null ? order.getSagaId() : "",
+                "createdAt", order.getCreatedAt(),
+                "updatedAt", order.getUpdatedAt()
+            )))
+            .orElse(ResponseEntity.notFound().build());
+    }
     
     @GetMapping("/health")
     public ResponseEntity<String> health() {
