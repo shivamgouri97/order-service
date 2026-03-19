@@ -1,0 +1,99 @@
+spring:
+  application:
+    name: order-service
+  
+  # MongoDB Configuration
+  data:
+    mongodb:
+      auto-index-creation: true
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: order-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    listener:
+      ack-mode: manual
+  mongodb:
+    uri: mongodb+srv://admin:admin@cluster0.39v1o.mongodb.net/orders_db
+
+# Server Configuration
+server:
+  port: 8082
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+#  metrics:
+#    export:
+#      prometheus:
+#        enabled: true
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderService:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+  
+  retry:
+    instances:
+      orderService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+
+# Application Specific Configuration
+order:
+  saga:
+    timeout-minutes: 5
+  kafka:
+    topics:
+      order-events: order-events
+      payment-events: payment-events
+      order-events-dlt: order-events-dlq
+      payment-events-dlt: payment-events-dlq
+
+# Logging Configuration
+logging:
+  level:
+    com.example.orderservice: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.data.mongodb: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
