@@ -1,9 +1,12 @@
 package com.example.orderservice.controller;
 
 import com.example.orderservice.dto.CreateOrderRequest;
+import com.example.orderservice.dto.OrderSearchRequest;
+import com.example.orderservice.dto.OrderSummaryResponse;
 import com.example.orderservice.model.Order;
 import com.example.orderservice.model.OrderStatus;
 import com.example.orderservice.service.OrderService;
+import com.example.orderservice.service.OrderSearchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +24,7 @@ import java.util.Map;
 public class OrderController {
     
     private final OrderService orderService;
+    private final OrderSearchService orderSearchService;
     
     @PostMapping
     public ResponseEntity<Order> createOrder(
@@ -82,6 +86,42 @@ public class OrderController {
                 "updatedAt", order.getUpdatedAt()
             )))
             .orElse(ResponseEntity.notFound().build());
+    }
+    
+    // ==================== NEW: Search & Analytics ====================
+    
+    @PostMapping("/search")
+    public ResponseEntity<List<OrderSummaryResponse>> searchOrders(
+            @RequestBody OrderSearchRequest request) {
+        log.info("POST /api/orders/search - Searching with criteria: {}", request);
+        List<OrderSummaryResponse> results = orderSearchService.searchOrders(request);
+        return ResponseEntity.ok(results);
+    }
+    
+    @GetMapping("/user/{userId}/analytics")
+    public ResponseEntity<Map<String, Object>> getOrderAnalytics(@PathVariable String userId) {
+        log.info("GET /api/orders/user/{}/analytics", userId);
+        Map<String, Object> analytics = orderSearchService.getOrderAnalytics(userId);
+        return ResponseEntity.ok(analytics);
+    }
+    
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<Order> updateOrderStatus(
+            @PathVariable String orderId,
+            @RequestBody Map<String, String> request) {
+        log.info("PUT /api/orders/{}/status", orderId);
+        String newStatus = request.get("status");
+        String updatedBy = request.getOrDefault("updatedBy", "system");
+        Order order = orderSearchService.updateOrderStatus(orderId, newStatus, updatedBy);
+        return ResponseEntity.ok(order);
+    }
+    
+    @GetMapping("/all")
+    public ResponseEntity<List<Order>> getAllOrders() {
+        log.info("GET /api/orders/all - Fetching all orders");
+        // INTENTIONAL: No pagination - could return millions of records
+        List<Order> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
     }
     
     @GetMapping("/health")
